@@ -8,7 +8,7 @@ library(readr)
 data <- read_csv2("data.csv", skip = 2)  # Suppression des 2 premières lignes
 colnames(data)[1] <- "Code"  # Renommer la première colonne si nécessaire
 
-# Convertir 'Code' en numérique et gérer les erreurs de conversion
+# Convertir 'Code' en apigné et gérer les erreurs de conversion
 data$Code <- as.numeric(data$Code)
 
 # Exclure les DOM-TOM (codes département > 95 ou NA)
