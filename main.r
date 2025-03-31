@@ -8,7 +8,6 @@ library(readr)
 data <- read_csv2("data.csv", skip = 2)  # Suppression des 2 premières lignes
 colnames(data)[1] <- "Code"  # Renommer la première colonne si nécessaire
 
-# Convertir 'Code' en numérique et gérer les erreurs de conversion
 data$Code <- as.numeric(data$Code)
 
 # Exclure les DOM-TOM (codes département > 95 ou NA)
@@ -23,43 +22,86 @@ top_riches <- data %>%
   arrange(`Taux de pauvreté 2021`) %>% 
   slice(1:5)
 
-# UI de l'application
+# Interface utilisateur
 ui <- fluidPage(
-  titlePanel("Suivi de la Pauvreté en France"),
-  
+  titlePanel("Analyse de la pauvreté en France"),
   sidebarLayout(
     sidebarPanel(
-      radioButtons(
-        inputId = "filter_choice",
-        label = "Afficher :",
-        choices = c("Top 5 départements les plus pauvres" = "pauvres",
-                    "Top 5 départements les plus riches" = "riches"),
-        selected = "pauvres"
-      )
+      selectInput("category", "Choisissez une catégorie :",
+                  choices = list(
+                    "Profil de la pauvreté" = "profil",
+                    "Accès à l’éducation et au logement" = "education_logement",
+                    "Conditions de logement et type d’habitat" = "habitat",
+                    "Revenus et aides sociales" = "revenus_aides",
+                    "Démographie et emploi public" = "demographie_emploi",
+                    "Économie et activité professionnelle" = "economie",
+                    "Services et infrastructures publiques" = "services",
+                    "Infrastructures sportives et éducatives" = "infrastructures"
+                  ))
     ),
-    
     mainPanel(
-      # Tableau du top 5 sélectionné
-      DTOutput("top_table"),
-      
-      # Analyses supplémentaires
-      h3("Caractérisation des départements"),
-      h4("Combien de pauvres ? Quelle répartition par tranche d’âge ?"),
-      plotOutput("plot_age"),
-      
-      h4("Quel taux de pauvreté chez les familles monoparentales ?"),
-      plotOutput("plot_familles"),
-      
-      h4("Quel taux de pauvreté chez les locataires ?"),
-      plotOutput("plot_locataires")
+      uiOutput("tabs")
     )
   )
 )
 
-# Serveur de l'application
+# Serveur
 server <- function(input, output) {
+  output$tabs <- renderUI({
+    if (input$category == "profil") {
+      tabsetPanel(
+        tabPanel("Répartition des pauvres", 
+                 radioButtons(
+                   inputId = "filter_choice",
+                   label = "Afficher :",
+                   choices = c("Top 5 départements les plus pauvres" = "pauvres",
+                               "Top 5 départements les plus riches" = "riches"),
+                   selected = "pauvres"
+                 ),
+                 DTOutput("top_table"),
+                 plotOutput("plot_age")),
+        tabPanel("Familles monoparentales", plotOutput("plot_familles")),
+        tabPanel("Locataires", plotOutput("plot_locataires"))
+      )
+    } else if (input$category == "education_logement") {
+      tabsetPanel(
+        tabPanel("Niveau d'éducation", "Graphique / Tableau du niveau de formation"),
+        tabPanel("Résidences principales", "Graphique / Tableau de la part des résidences principales"),
+        tabPanel("Logements vacants", "Graphique / Tableau de la part des logements vacants")
+      )
+    } else if (input$category == "habitat") {
+      tabsetPanel(
+        tabPanel("Locataires HLM", "Graphique / Tableau de la part des locataires HLM"),
+        tabPanel("Maisons/Appartements", "Graphique / Tableau de la part des maisons et appartements")
+      )
+    } else if (input$category == "revenus_aides") {
+      tabsetPanel(
+        tabPanel("Ménages fiscaux imposés", "Graphique / Tableau de la part des ménages fiscaux imposés"),
+        tabPanel("Prestations sociales", "Graphique / Tableau de la part des prestations sociales")
+      )
+    } else if (input$category == "demographie_emploi") {
+      tabsetPanel(
+        tabPanel("Démographie", "Graphique / Tableau sur la démographie"),
+        tabPanel("Effectifs publics", "Graphique / Tableau sur l'administration publique, santé, éducation")
+      )
+    } else if (input$category == "economie") {
+      tabsetPanel(
+        tabPanel("Secteurs d'activité", "Graphique / Tableau de la répartition des entreprises par secteur d'activité")
+      )
+    } else if (input$category == "services") {
+      tabsetPanel(
+        tabPanel("Police/Gendarmerie, Banques, Grandes surfaces", "Graphique / Tableau du nombre de services"),
+        tabPanel("Urgences/Médecins", "Graphique / Tableau du nombre de services d'urgence et médecins"),
+        tabPanel("Pharmacies/Infirmiers", "Graphique / Tableau du nombre de pharmacies et infirmiers")
+      )
+    } else if (input$category == "infrastructures") {
+      tabsetPanel(
+        tabPanel("Bassins/Salles multisports", "Graphique / Tableau du nombre d'infrastructures sportives"),
+        tabPanel("Écoles/Collèges/Lycées", "Graphique / Tableau du nombre d'établissements scolaires")
+      )
+    }
+  })
   
-  # Tableau dynamique basé sur le choix de l'utilisateur
   output$top_table <- renderDT({
     if (input$filter_choice == "pauvres") {
       datatable(top_pauvres, options = list(pageLength = 5))
@@ -68,7 +110,6 @@ server <- function(input, output) {
     }
   })
   
-  # Répartition par tranche d'âge
   output$plot_age <- renderPlot({
     selected_data <- if (input$filter_choice == "pauvres") top_pauvres else top_riches
     ggplot(selected_data, aes(x = Libellé, y = Population_municipale_2022, fill = Libellé)) +
@@ -78,7 +119,6 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
-  # Taux de pauvreté chez les familles monoparentales
   output$plot_familles <- renderPlot({
     selected_data <- if (input$filter_choice == "pauvres") top_pauvres else top_riches
     ggplot(selected_data, aes(x = Libellé, y = `Taux de pauvreté - familles monoparentales 2021`, fill = Libellé)) +
@@ -88,7 +128,6 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
   
-  # Taux de pauvreté chez les locataires
   output$plot_locataires <- renderPlot({
     selected_data <- if (input$filter_choice == "pauvres") top_pauvres else top_riches
     ggplot(selected_data, aes(x = Libellé, y = `Taux de pauvreté - locataires 2021`, fill = Libellé)) +
@@ -99,4 +138,5 @@ server <- function(input, output) {
   })
 }
 
-shinyApp(ui, server)
+# Exécution de l'application
+shinyApp(ui = ui, server = server)
