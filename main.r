@@ -43,5 +43,5 @@ server <- function(input, output) {
   })
 }
 
-# Lancement de l'application
+# ta mere la pute
 shinyApp(ui, server)
