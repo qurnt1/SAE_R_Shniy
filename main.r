@@ -45,3 +45,5 @@ server <- function(input, output) {
 
 # ta mere la pute
 shinyApp(ui, server)
+
+#la salope de mere a julien
