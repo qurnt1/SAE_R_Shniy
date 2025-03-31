@@ -3,7 +3,7 @@ library(ggplot2)
 library(DT)
 library(dplyr)
 library(readr)
-
+#zizi
 # Chargement des données
 data <- read_csv2("data.csv", skip = 2)  # Suppression des 2 premières lignes
 colnames(data)[1] <- "Code"  # Renommer la première colonne si nécessaire
