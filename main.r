@@ -107,9 +107,15 @@ server <- function(input, output) {
   
   output$top_table <- renderDT({
     if (input$filter_choice == "pauvres") {
+<<<<<<< HEAD
       datatable(top_pauvres %>% select(Libellé, `Taux de pauvreté 2021`), options = list(pageLength = 5))
     } else {
       datatable(top_riches %>% select(Libellé, `Taux de pauvreté 2021`), options = list(pageLength = 5))
+=======
+      datatable(top_pauvres, options = list(pageLength = 5))
+    } else {
+      datatable(top_riches, options = list(pageLength = 5))
+>>>>>>> 7a1b9e5338c005776daf622edcdfd9e942012772
     }
   })
   
@@ -142,4 +148,8 @@ server <- function(input, output) {
 }
 
 # Exécution de l'application
+<<<<<<< HEAD
 shinyApp(ui = ui, server = server)
+=======
+shinyApp(ui = ui, server = server)
+>>>>>>> 7a1b9e5338c005776daf622edcdfd9e942012772
